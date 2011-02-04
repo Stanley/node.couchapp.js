@@ -62,14 +62,14 @@ function createApp (doc, url, cb) {
     doc._attachments = copy(app.doc._attachments)
     delete doc.__attachments;
     var body = JSON.stringify(doc)
-    console.log('PUT '+url)
-    request({uri:url, method:'PUT', body:body, headers:h}, function (err, resp, body) {
+    console.log('PUT '+design)
+    request({uri:design, method:'PUT', body:body, headers:h}, function (err, resp, body) {
       if (err) throw err;
       if (resp.statusCode !== 201) throw new Error("Could not push document\n"+body)
       app.doc._rev = JSON.parse(body).rev
       console.log('Finished push. '+app.doc._rev)
       playSound();
-      request({uri:url, headers:h}, function (err, resp, body) {
+      request({uri:design, headers:h}, function (err, resp, body) {
         body = JSON.parse(body);
         app.doc._attachments = body._attachments;
         if (callback) callback()
@@ -206,13 +206,23 @@ function createApp (doc, url, cb) {
     })
   }
   
-  if (url.slice(url.length - doc._id.length) !== doc._id) url += '/' + doc._id;
-  request({uri:url, headers:h}, function (err, resp, body) {
+  // Get current couchapp design document
+  var design = url +'/'+ doc._id;
+  request({uri: design, headers:h}, function (err, resp, body) {
+    console.log(resp.statusCode, body)
     if (err) throw err;
-    if (resp.statusCode == 404) app.current = {};
+    if (resp.statusCode == 404) {
+      // Create database if does not exist
+      request({method:'PUT', uri:url}, function(){
+        app.current = {};
+        cb(app);
+      })
+    }
     else if (resp.statusCode !== 200) throw new Error("Failed to get doc\n"+body)
-    else app.current = JSON.parse(body)
-    cb(app)
+    else {
+      app.current = JSON.parse(body);
+      cb(app);
+    }
   })
 }
 
