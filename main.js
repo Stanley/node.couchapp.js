@@ -1,3 +1,5 @@
+
+
 var path = require('path')
   , sys = require('sys')
   , fs = require('fs')
@@ -62,7 +64,7 @@ function createApp (doc, url, cb) {
     doc._attachments = copy(app.doc._attachments)
     delete doc.__attachments;
     var body = JSON.stringify(doc)
-    console.log('PUT '+design)
+    console.log('PUT '+design.replace(/^(https?:\/\/[^@:]+):[^@]+@/, '$1:******@'))
     request({uri:design, method:'PUT', body:body, headers:h}, function (err, resp, body) {
       if (err) throw err;
       if (resp.statusCode !== 201) throw new Error("Could not push document\n"+body)
@@ -209,7 +211,7 @@ function createApp (doc, url, cb) {
   // Get current couchapp design document
   var design = url +'/'+ doc._id;
   request({uri: design, headers:h}, function (err, resp, body) {
-    console.log(resp.statusCode, body)
+  
     if (err) throw err;
     if (resp.statusCode == 404) {
       // Create database if does not exist
